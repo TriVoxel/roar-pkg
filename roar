@@ -17,8 +17,8 @@ cnf="0"
   fi
 }
 .noConfirm () {
-  if ($cnf = 1); then
-    return -y
+  if [ $cnf = 1 ]; then
+    echo "-y"
   fi
 }
 .setConfirm () {
@@ -26,7 +26,10 @@ cnf="0"
 }
 .fetch () {
   .elevPriv
-  sudo apt-get install $pkg
+  sudo apt-get install $(.noConfirm) $pkg
+}
+.fetchList () {
+  apt-get list --installed
 }
 .update () {
   .elevPriv
@@ -34,23 +37,23 @@ cnf="0"
 }
 .upgrade () {
   .elevPriv
-  sudo apt-get upgrade
+  sudo apt-get upgrade $(.noConfirm)
 }
 .autoRemove () {
   .elevPriv
-  sudo apt-get autoremove $pkg
+  sudo apt-get autoremove $(.noConfirm) $pkg
 }
 .purge () {
   .elevPriv
-  sudo apt-get purge $pkg
+  sudo apt-get purge $(.noConfirm) $pkg
 }
 .addRepo () {
   .elevPriv
-  sudo apt-add-repository $pkg
+  sudo apt-add-repository $(.noConfirm) $pkg
 }
 .remRepo () {
   .elevPriv
-  sudo add-apt-repository --remove $pkg
+  sudo add-apt-repository --remove $(.noConfirm) $pkg
 }
 .version () {
   echo "\
@@ -58,8 +61,9 @@ cnf="0"
   ( o.o )      Roar Version 1.0
     / \\   __   Developed by TriVoxel
    (___)_/  '"
-  exit
 }
+
+### Logic ###
 case "$1" in
   -H|-h|--help)
     if [ -z $2 ]; then
@@ -75,13 +79,13 @@ Operations:
   roar {-G --upgrade}              >> upgrades the system
   roar {-S --search} <query>       >> searches repositories for package(s)
   roar {-O --repo} <ppa>           >> adds Ubuntu/Debian PPAs
-Use 'roar -H <operation>' for extended information on it'"
+Use 'roar -H <operation>' for extended information on it
+  Example: roar -H --fetch"
     else
       case "$2" in
         -H|--help)
           echo "Usage: roar {-H --help} <operation>
 Description: displays help dialogue.
-
 Options:
   roar -H {-H --help}              >> displays help dialogue for 'help' operation
   roar -H {-V --version}           >> displays help dialogue for 'version' operation
@@ -100,39 +104,47 @@ Description: displays version information"
           echo "Usage: roar {-F*} <package(s)>
 Description: installs selected package(s)
 Options:
-  roar -Fn <package(s)>            >> don't require pressing 'Y' to install packages
-  roar -Fl                         >> lists packages
-  roar -Fe <package(s)>            >> reinstall packages"
+  roar -Fn <package(s)>            >> don't require consent to install packages
+  roar -Fe <package(s)>            >> reinstall packages
+  roar -Fl                         >> lists packages"
           ;;
         -R|--remove)
           echo "Usage: roar {-R*} <package(s)>
 Description: removes selected package(s)
 Options:
-  roar -Rn <package(s)>            >> don't require pressing 'Y' to install packages"
+  roar -Rn <package(s)>            >> don't require consent to install packages
+  roar -Rp <package(s)>            >> purge all of package(s) files and directories
+  roar -Rpn <package(s)>           >> purge all of package(s) files and directories without consent
+  roar -Ro <package(s)> <ppa>      >> removes selected PPA
+  roar -Ron <package(s)>           >> removes selected PPA without consent"
           ;;
         -U|--upgrade)
           echo "Usage: roar {-U*} <package(s)>
 Description: updates the system
 Options:
-  roar -Un                         >> don't require pressing 'Y' to install packages
+  roar -Un                         >> don't require consent to download updates
   roar -Ug                         >> update the system then install updates
-  roar -Ugn                        >> update the system then install updates without pressing 'Y'"
+  roar -Ugn                        >> update the system then install updates without consent"
           ;;
         -G|--upgrade)
           echo "Usage: roar {-G*} <package(s)>
 Description: upgrades the system
 Options:
-  roar -Gn                         >> don't require pressing 'Y' to install packages
+  roar -Gn                         >> don't require confirmation to install updates
   roar -Gu                         >> update the system then install updates
-  roar -Gun                        >> update the system then install updates without pressing 'Y'"
+  roar -Gun                        >> update the system then install updates without consent"
           ;;
         -S|--search)
           echo "Usage: roar {-S} <query>
 Description: searches repositories for packages."
           ;;
         -O|--repo)
-          echo "Usage: roar {-O} <ppa>
-Description: adds Debian/Ubuntu PPAs"
+          echo "Usage: roar {-O*} <ppa>
+Description: adds Debian/Ubuntu PPAs
+Options:
+  roar -On                         >> adds Debian/Ubuntu PPA without consent
+  roar -Or                         >> removes selected PPA
+  roar -Orn                        >> removes selected PPA without consent"
           ;;
       esac
     fi
@@ -145,53 +157,66 @@ Description: adds Debian/Ubuntu PPAs"
     .fetch
     ;;
   -Fn)
-    .setConfirm
-    .fetch
+    .setConfirm && .fetch
+    ;;
+  -Fl)
+    .fetchList
     ;;
   # Repo
   -O|--repo)
     .addRepo
     ;;
   -On)
-    .setConfirm
-    .addRepo
+    .setConfirm && .addRepo
     ;;
   -Or)
     .remRepo
     ;;
   -Orn)
-    .setConfirm
-    .remRepo
+    .setConfirm && .remRepo
     ;;
   # Remove
   -R|--remove)
     .remove
+    ;;
+  -Rn)
+    .setConfirm && .remove
+    ;;
+  -Rp)
+    .purge
+    ;;
+  -Rpn)
+    .setConfirm && .purge
+    ;;
+  -Ro)
+    .remRepo
+    ;;
+  -Ron)
+    .setConfirm && .remRepo
     ;;
   # Update
   -U|--update)
     .update
     ;;
   -Un)
-    .setConfirm
-    .update
+    .setConfirm && .update
     ;;
   # Upgrade
   -G|--upgrade)
     .upgrade
     ;;
   -Gn)
-    .setConfirm
-    .upgrade
+    .setConfirm && .upgrade
     ;;
   # Update & Upgrade
   -Ug|-Gu)
-    .update
-    .upgrade
+    .update && .upgrade
     ;;
   -Ugn|-Gun)
-    .setConfirm
-    .update
-    .upgrade
+    .setConfirm && .update && .upgrade
+    ;;
+  --debug)
+    .setConfirm && echo $(.noConfirm)
     ;;
   #-T|-t|--test)
   #  echo "Output" "$pkg"
