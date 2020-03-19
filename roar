@@ -5,16 +5,24 @@
 
 ### Variables ###
 ver="1.0"
-self=$0
-var=$1
-pkg=$(echo "$*" | cut -d " " -f2-)
+slf=$0
+opr=$1
 cnf="0"
 
+## Generates the packages list
+if [[ ! -z $2 ]]; then
+  pkg=$(echo "$*" | cut -d " " -f2-) # Maybe a bit hacky but gets the job done
+else
+  pkg=$2
+fi
+
 ### Functions ###
+.complete () {
+  return 100 # Completed commands return 100 for error detection
+}
 .elevPriv () { #increases privileges if not root
   if [ $EUID != 0 ]; then
-    sudo "$self" "$@"
-    #exit $?
+    sudo "$slf" "$@"
   fi
 }
 .noConfirm () {
@@ -26,50 +34,79 @@ cnf="0"
   cnf="1"
 }
 .fetch () {
-  .elevPriv
+  echo "\
+ /\\_/\\   Preparing to fetch
+( ^-^ )  selected packages!!" && sleep 1
   sudo apt-get install $(.noConfirm) $pkg
 }
+.refetch () {
+  echo "\
+ /\\_/\\   Preparing to fetch
+( ^-^ )  selected packages!!" && sleep 1
+  sudo apt-get install $(.noConfirm) --reinstall $pkg
+}
+.remove () {
+  echo "\
+ /\\_/\\   Preparing to remove
+( ;-; )  selected packages!!" && sleep 1
+  sudo apt-get remove $(.noConfirm) $pkg
+}
 .fetchList () {
-  apt-get list --installed
+  echo "\
+ /\\_/\\   Preparing to list
+( -.-*)  installed packages!!" && sleep 1
+  apt list --installed
 }
 .update () {
-  .elevPriv
-  sudo apt-get update $(.noConfirm) $pkg
+  echo "\
+ /\\_/\\   Preparing to update
+( @-@!)  all your packages!!" && sleep 1
+  sudo apt-get update $(.noConfirm)
 }
 .upgrade () {
-  .elevPriv
-  sudo apt-get upgrade $(.noConfirm)
+  echo "\
+ /\\_/\\   Preparing to upgrade
+( o-o')  all your packages!!" && sleep 1
+  sudo apt-get upgrade $(.noConfirm) $pkg
 }
 .autoRemove () {
-  .elevPriv
+  echo "\
+ /\\_/\\   Preparing to autoremove
+( ;.; )  selected packages!!" && sleep 1
   sudo apt-get autoremove $(.noConfirm) $pkg
 }
 .purge () {
-  .elevPriv
+  echo "\
+ /\\_/\\   Preparing to purge
+( x x )  selected packages!!" && sleep 1
   sudo apt-get purge $(.noConfirm) $pkg
 }
 .addRepo () {
-  .elevPriv
+  echo "\
+ /\\_/\\   Preparing to add the
+( 0.0 )  selected repository!!" && sleep 1
   sudo apt-add-repository $(.noConfirm) $pkg
 }
 .remRepo () {
-  .elevPriv
+  echo "\
+ /\\_/\\   Preparing to remove the
+( 0n0 )  selected repository!!" && sleep 1
   sudo add-apt-repository --remove $(.noConfirm) $pkg
 }
 .version () {
   echo "\
-   /\\_/\\
-  ( o.o )      Roar Version $ver
-    / \\   __   Developed by TriVoxel
-   (___)_/  '"
+ /\\_/\\
+( -.o )      Roar Version $ver
+  / \\   __   Developed by TriVoxel
+ (___)_/  '"
+  .complete
 }
 
 ### Logic ###
 case "$1" in
   -H|-h|--help)
     if [ -z $2 ]; then
-      echo "Roar help:
-Usage: roar <operation+option> [...]
+      echo "Usage: roar <operation+option> [...]
   Example: roar -Ugn
 Operations:
   roar {-H --help} <operation>     >> displays help dialogue
@@ -81,7 +118,7 @@ Operations:
   roar {-S --search} <query>       >> searches repositories for package(s)
   roar {-O --repo} <ppa>           >> adds Ubuntu/Debian PPAs
 Use 'roar -H <operation>' for extended information on it
-  Example: roar -H --fetch"
+  Example: roar -H --help"
     else
       case "$2" in
         -H|--help)
@@ -105,15 +142,18 @@ Description: displays version information"
           echo "Usage: roar {-F*} <package(s)>
 Description: installs selected package(s)
 Options:
-  roar -Fn <package(s)>            >> don't require consent to install packages
-  roar -Fe <package(s)>            >> reinstall packages
-  roar -Fl                         >> lists packages"
+  roar -Fn <package(s)>            >> don't require consent to fetch selected package(s)
+  roar -Fe <package(s)>            >> refetch selected package(s) without consent
+  roar -Fen <package(s)>           >> refetch selected package(s) without consent
+  roar -Fl                         >> lists installed packages"
           ;;
         -R|--remove)
           echo "Usage: roar {-R*} <package(s)>
 Description: removes selected package(s)
 Options:
   roar -Rn <package(s)>            >> don't require consent to install packages
+  roar -Ra <package(s)>            >> automatically removes unneeded packages
+  roar -Ran <package(s)>           >> automatically removes unneeded packages without consent
   roar -Rp <package(s)>            >> purge all of package(s) files and directories
   roar -Rpn <package(s)>           >> purge all of package(s) files and directories without consent
   roar -Ro <package(s)> <ppa>      >> removes selected PPA
@@ -160,6 +200,12 @@ Options:
   -Fn)
     .setConfirm && .fetch
     ;;
+  -Fe)
+    .refetch
+    ;;
+  -Fen)
+    .setConfirm && .refetch
+    ;;
   -Fl)
     .fetchList
     ;;
@@ -182,6 +228,12 @@ Options:
     ;;
   -Rn)
     .setConfirm && .remove
+    ;;
+  -Ra)
+    .autoRemove
+    ;;
+  -Ran)
+    .setConfirm && .autoRemove
     ;;
   -Rp)
     .purge
@@ -216,11 +268,4 @@ Options:
   -Ugn|-Gun)
     .setConfirm && .update && .upgrade
     ;;
-  --debug)
-    .setConfirm && echo $(.noConfirm)
-    ;;
-  #-T|-t|--test)
-  #  echo "Output" "$pkg"
-  #  ;;
 esac
-exit
