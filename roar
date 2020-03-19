@@ -133,6 +133,7 @@ Description: searches repositories for packages."
         -O|--repo)
           echo "Usage: roar {-O} <ppa>
 Description: adds Debian/Ubuntu PPAs"
+          ;;
       esac
     fi
     ;;
