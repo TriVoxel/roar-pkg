@@ -1,0 +1,139 @@
+#!/bin/bash
+## This is a program written by TriVoxel (https://trivoxel.page.link/site)
+## Made for LionOS - A free, open source Linux distribution (https://lionos.org)
+## Installs programs using a custom version of the Apt software.
+
+### Variables ###
+self=$0
+var=$1
+pkg=$(echo "$*" | cut -d " " -f2-)
+cnf="0"
+
+### Functions ###
+.elevPriv () { #increases privileges if not root
+  if [ $EUID != 0 ]; then
+    sudo "$self" "$@"
+    #exit $?
+  fi
+}
+.noConfirm () {
+  if ($cnf = 1); then
+    return -y
+  fi
+}
+.setConfirm () {
+  cnf="1"
+}
+.fetch () {
+  .elevPriv
+  sudo apt-get install $pkg
+}
+.update () {
+  .elevPriv
+  sudo apt-get update $(.noConfirm) $pkg
+}
+.upgrade () {
+  .elevPriv
+  sudo apt-get upgrade
+}
+.autoRemove () {
+  .elevPriv
+  sudo apt-get autoremove $pkg
+}
+.purge () {
+  .elevPriv
+  sudo apt-get purge $pkg
+}
+.addRepo () {
+  .elevPriv
+  sudo apt-add-repository $pkg
+}
+.remRepo () {
+  .elevPriv
+  sudo add-apt-repository --remove $pkg
+}
+.version () {
+  echo "\
+   /\\_/\\
+  ( o.o )      Roar Version 1.0
+    / \\   __   Developed by TriVoxel
+   (___)_/  '"
+  exit
+}
+case "$1" in
+  -H|-h|--help)
+    echo "Roar help:
+    Usage: roar <operation> [...]
+    Operations:
+      roar {-H --help}                >> displays help dialogue
+      roar {-V --version}             >> displays version information
+      roar {-F --fetch} <package(s)>  >> installs selected packages
+      roar {-R --remove} <package(s)> >>
+      roar {-U --update}              >> updates the system
+      roar {-G --upgrade}             >> upgrades the system
+      roar {-O --repo}  <ppa>         >> adds Ubuntu/Debian PPAs
+    Options:
+    roar {-n --noconfirm}           >> skips requiring you to press Y to continue"
+    exit
+    ;;
+  -V|-v|--version)
+    .version
+    ;;
+  # Fetch
+  -F|--fetch)
+    .fetch
+    ;;
+  -Fn)
+    .setConfirm
+    .fetch
+    ;;
+  # Repo
+  -O|--repo)
+    .addRepo
+    ;;
+  -On)
+    .setConfirm
+    .addRepo
+    ;;
+  -Or)
+    .remRepo
+    ;;
+  -Orn)
+    .setConfirm
+    .remRepo
+    ;;
+  # Remove
+  -R|--remove)
+    .remove
+    ;;
+  # Update
+  -U|--update)
+    .update
+    ;;
+  -Un)
+    .setConfirm
+    .update
+    ;;
+  # Upgrade
+  -G|--upgrade)
+    .upgrade
+    ;;
+  -Gn)
+    .setConfirm
+    .upgrade
+    ;;
+  # Update & Upgrade
+  -Ug|-Gu)
+    .update
+    .upgrade
+    ;;
+  -Ugn|-Gun)
+    .setConfirm
+    .update
+    .upgrade
+    ;;
+  #-T|-t|--test)
+  #  echo "Output" "$pkg"
+  #  ;;
+esac
+exit
