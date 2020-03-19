@@ -1,0 +1,107 @@
+#!/bin/bash
+## This is a program written by TriVoxel (https://trivoxel.page.link/site)
+## Made for LionOS - A free, open source Linux distribution (https://lionos.org)
+## This is a modified version of https://raw.githubusercontent.com/Debian/apt/master/completions/bash/apt
+
+_roar() {
+local sourcesdir="/etc/apt/sources.list.d"
+local cur prev words cword
+_init_completion || return
+
+#local GENERIC_APT_GET_OPTIONS='
+#    -H -h --help
+#    -V -v --version
+#    -F --fetch
+#    -R --remove
+#    -U --update
+#    -G --upgrade
+#    -S --search
+#    -O --repo
+#'
+
+# see if the user selected a command already
+local COMMANDS=(
+  "-H" "-h" "--help"
+  "-V" "-v" "--version"
+  # Fetch commands
+  "-F" "--fetch"
+  "-Fn" "-Fl" "-Fe" "-Fen"
+  # Remove commands
+  "-R" "--remove"
+  "-Rn" "-Ra" "-Ran" "-Rp" "-Rpn" "-Ro" "-Ron"
+  # Update commands
+  "-U" "--update"
+  "-Ug" "-Ugn"
+  # Upgrade commands
+  "-G" "--upgrade"
+  "-Gn" "-Gu" "-Gun"
+  "-S" "--search"
+  # Repo commands
+  "-O" "--repo"
+  "-On" "-Or" "-Orn")
+
+local command i
+for (( i=0; i < ${#words[@]}-1; i++ )); do
+  if [[ ${COMMANDS[@]} =~ ${words[i]} ]]; then
+    command=${words[i]}
+    break
+  fi
+done
+
+# supported options per command
+if [[ "$cur" == -* ]]; then
+  case $command in
+    -H|-h|--help)
+      COMPREPLY=( $( compgen -W '-H --help -h
+        -V --version -v
+        -F --fetch
+        -R --remove
+        -U --update
+        -G --upgrade
+        -S --search
+        -O --repo' -- "$cur" ) )
+      return 0
+      ;;
+  esac
+fi
+
+# specific command arguments
+if [[ -n $command ]]; then
+  case $command in
+    -R|-Rn|-Ra|-Rp|-Rpn|--remove|--purge)
+      if [[ -f /etc/debian_version ]]; then
+        # Debian system
+        COMPREPLY=( $( \
+          _xfunc dpkg _comp_dpkg_installed_packages $cur ) )
+      else
+        # assume RPM based
+        _xfunc rpm _rpm_installed_packages
+      fi
+      return 0
+      ;;
+    -Fl)
+      COMPREPLY=( $( apt-cache --no-generate pkgnames "$cur" \
+        2> /dev/null ) )
+      return 0
+      ;;
+    -F|-Fn|-Fe|-Fen|--fetch)
+      COMPREPLY=( $( apt-cache --no-generate pkgnames "$cur" \
+        2> /dev/null ) )
+      if [[ "$cur" == ./* || "$cur" == /* ]]; then
+        _filedir "deb"
+      fi
+      return 0
+      ;;
+  esac
+fi
+
+# no command yet, show what commands we have
+if [ "$command" = "" ]; then
+  COMPREPLY=( $( compgen -W '${COMMANDS[@]}' -- "$cur" ) )
+fi
+
+return 0
+} &&
+complete -F _roar roar
+
+# ex: ts=4 sw=4 et filetype=sh
