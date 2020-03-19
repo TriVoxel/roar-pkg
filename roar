@@ -4,6 +4,7 @@
 ## Installs programs using a custom version of the Apt software.
 
 ### Variables ###
+ver="1.0"
 self=$0
 var=$1
 pkg=$(echo "$*" | cut -d " " -f2-)
@@ -58,7 +59,7 @@ cnf="0"
 .version () {
   echo "\
    /\\_/\\
-  ( o.o )      Roar Version 1.0
+  ( o.o )      Roar Version $ver
     / \\   __   Developed by TriVoxel
    (___)_/  '"
 }
