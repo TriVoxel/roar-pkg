@@ -62,19 +62,79 @@ cnf="0"
 }
 case "$1" in
   -H|-h|--help)
-    echo "Roar help:
-    Usage: roar <operation> [...]
-    Operations:
-      roar {-H --help}                >> displays help dialogue
-      roar {-V --version}             >> displays version information
-      roar {-F --fetch} <package(s)>  >> installs selected packages
-      roar {-R --remove} <package(s)> >>
-      roar {-U --update}              >> updates the system
-      roar {-G --upgrade}             >> upgrades the system
-      roar {-O --repo}  <ppa>         >> adds Ubuntu/Debian PPAs
-    Options:
-    roar {-n --noconfirm}           >> skips requiring you to press Y to continue"
-    exit
+    if [ -z $2 ]; then
+      echo "Roar help:
+Usage: roar <operation+option> [...]
+  Example: roar -Ugn
+Operations:
+  roar {-H --help} <operation>     >> displays help dialogue
+  roar {-V --version}              >> displays version information
+  roar {-F --fetch} <package(s)>   >> installs selected package(s)
+  roar {-R --remove} <package(s)>  >> removes selected package(s)
+  roar {-U --update}               >> updates the system
+  roar {-G --upgrade}              >> upgrades the system
+  roar {-S --search} <query>       >> searches repositories for package(s)
+  roar {-O --repo} <ppa>           >> adds Ubuntu/Debian PPAs
+Use 'roar -H <operation>' for extended information on it'"
+    else
+      case "$2" in
+        -H|--help)
+          echo "Usage: roar {-H --help} <operation>
+Description: displays help dialogue.
+
+Options:
+  roar -H {-H --help}              >> displays help dialogue for 'help' operation
+  roar -H {-V --version}           >> displays help dialogue for 'version' operation
+  roar -H {-F --fetch}             >> displays help dialogue for 'fetch' operation
+  roar -H {-R --remove}            >> displays help dialogue for 'remove' operation
+  roar -H {-U --update}            >> displays help dialogue for 'update' operation
+  roar -H {-G --upgrade}           >> displays help dialogue for 'upgrade' operation
+  roar -H {-S --search}            >> displays help dialogue for 'search' operation
+  roar -H {-O --repo}              >> displays help dialogue for 'repo' operation"
+          ;;
+        -V|--version)
+          echo "Usage: roar {-V --version}
+Description: displays version information"
+          ;;
+        -F|--fetch)
+          echo "Usage: roar {-F*} <package(s)>
+Description: installs selected package(s)
+Options:
+  roar -Fn <package(s)>            >> don't require pressing 'Y' to install packages
+  roar -Fl                         >> lists packages
+  roar -Fe <package(s)>            >> reinstall packages"
+          ;;
+        -R|--remove)
+          echo "Usage: roar {-R*} <package(s)>
+Description: removes selected package(s)
+Options:
+  roar -Rn <package(s)>            >> don't require pressing 'Y' to install packages"
+          ;;
+        -U|--upgrade)
+          echo "Usage: roar {-U*} <package(s)>
+Description: updates the system
+Options:
+  roar -Un                         >> don't require pressing 'Y' to install packages
+  roar -Ug                         >> update the system then install updates
+  roar -Ugn                        >> update the system then install updates without pressing 'Y'"
+          ;;
+        -G|--upgrade)
+          echo "Usage: roar {-G*} <package(s)>
+Description: upgrades the system
+Options:
+  roar -Gn                         >> don't require pressing 'Y' to install packages
+  roar -Gu                         >> update the system then install updates
+  roar -Gun                        >> update the system then install updates without pressing 'Y'"
+          ;;
+        -S|--search)
+          echo "Usage: roar {-S} <query>
+Description: searches repositories for packages."
+          ;;
+        -O|--repo)
+          echo "Usage: roar {-O} <ppa>
+Description: adds Debian/Ubuntu PPAs"
+      esac
+    fi
     ;;
   -V|-v|--version)
     .version
