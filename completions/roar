@@ -1,4 +1,3 @@
-#!/bin/bash
 ## This is a program written by TriVoxel (https://trivoxel.page.link/site)
 ## Made for LionOS - A free, open source Linux distribution (https://lionos.org)
 ## This is a modified version of https://raw.githubusercontent.com/Debian/apt/master/completions/bash/apt
@@ -25,20 +24,20 @@ local COMMANDS=(
   "-V" "-v" "--version"
   # Fetch commands
   "-F" "--fetch"
-  "-Fn" "-Fl" "-Fe" "-Fen"
+  #"-Fn" "-Fl" "-Fe" "-Fen"
   # Remove commands
   "-R" "--remove"
-  "-Rn" "-Ra" "-Ran" "-Rp" "-Rpn" "-Ro" "-Ron"
+  #"-Rn" "-Ra" "-Ran" "-Rp" "-Rpn" "-Ro" "-Ron"
   # Update commands
   "-U" "--update"
-  "-Ug" "-Ugn"
+  #"-Ug" "-Ugn"
   # Upgrade commands
   "-G" "--upgrade"
-  "-Gn" "-Gu" "-Gun"
+  #"-Gn" "-Gu" "-Gun"
   "-S" "--search"
   # Repo commands
-  "-O" "--repo"
-  "-On" "-Or" "-Orn")
+  "-O" "--repo")
+  #"-On" "-Or" "-Orn"
 
 local command i
 for (( i=0; i < ${#words[@]}-1; i++ )); do

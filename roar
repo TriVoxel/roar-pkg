@@ -69,6 +69,9 @@ fi
 ( o-o')  all your packages!!" && sleep 1
   sudo apt-get upgrade $(.noConfirm) $pkg
 }
+.search () {
+  apt-get search $pkg
+}
 .autoRemove () {
   echo "\
  /\\_/\\   Preparing to autoremove
@@ -267,5 +270,8 @@ Options:
     ;;
   -Ugn|-Gun)
     .setConfirm && .update && .upgrade
+    ;;
+  -S|--search)
+    .search
     ;;
 esac
