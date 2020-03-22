@@ -1,0 +1,283 @@
+#!/bin/bash
+## This is a program written by TriVoxel (https://trivoxel.page.link/site)
+## Made for LionOS - A free, open source Linux distribution (https://lionos.org)
+## Installs programs using a custom version of the Apt software.
+
+### Variables ###
+ver="1.0"
+slf=$0
+opr=$1
+cnf="0"
+
+## Generates the packages list
+if [[ ! -z $2 ]]; then
+  pkg=$(echo "$*" | cut -d " " -f2-) # Maybe a bit hacky but gets the job done
+else
+  pkg=$2
+fi
+
+### Functions ###
+.complete () {
+  return 100 # Completed commands return 100 for error detection
+}
+.elevPriv () { #increases privileges if not root
+  if [ $EUID != 0 ]; then
+    sudo "$slf" "$@"
+  fi
+}
+.noConfirm () {
+  if [ $cnf = 1 ]; then
+    echo "-y"
+  fi
+}
+.setConfirm () {
+  cnf="1"
+}
+.fetch () {
+  echo "\
+ /\\_/\\   Preparing to fetch
+( ^-^ )  selected packages!!" && sleep 1
+  sudo apt-get install $(.noConfirm) $pkg
+}
+.refetch () {
+  echo "\
+ /\\_/\\   Preparing to fetch
+( ^-^ )  selected packages!!" && sleep 1
+  sudo apt-get install $(.noConfirm) --reinstall $pkg
+}
+.remove () {
+  echo "\
+ /\\_/\\   Preparing to remove
+( ;-; )  selected packages!!" && sleep 1
+  sudo apt-get remove $(.noConfirm) $pkg
+}
+.fetchList () {
+  echo "\
+ /\\_/\\   Preparing to list
+( -.-*)  installed packages!!" && sleep 1
+  apt list --installed
+}
+.update () {
+  echo "\
+ /\\_/\\   Preparing to update
+( @-@!)  all your packages!!" && sleep 1
+  sudo apt-get update $(.noConfirm)
+}
+.upgrade () {
+  echo "\
+ /\\_/\\   Preparing to upgrade
+( o-o')  all your packages!!" && sleep 1
+  sudo apt-get upgrade $(.noConfirm) $pkg
+}
+.search () {
+  apt-get search $pkg
+}
+.autoRemove () {
+  echo "\
+ /\\_/\\   Preparing to autoremove
+( ;.; )  selected packages!!" && sleep 1
+  sudo apt-get autoremove $(.noConfirm) $pkg
+}
+.purge () {
+  echo "\
+ /\\_/\\   Preparing to purge
+( x x )  selected packages!!" && sleep 1
+  sudo apt-get purge $(.noConfirm) $pkg
+}
+.addRepo () {
+  echo "\
+ /\\_/\\   Preparing to add the
+( 0.0 )  selected repository!!" && sleep 1
+  sudo apt-add-repository $(.noConfirm) $pkg
+}
+.remRepo () {
+  echo "\
+ /\\_/\\   Preparing to remove the
+( 0n0 )  selected repository!!" && sleep 1
+  sudo add-apt-repository --remove $(.noConfirm) $pkg
+}
+.version () {
+  echo "\
+ /\\_/\\
+( -.o )      Roar Version $ver
+  / \\   __   Developed by TriVoxel
+ (___)_/  '"
+  .complete
+}
+
+### Logic ###
+case "$1" in
+  -H|-h|--help)
+    if [ -z $2 ]; then
+      echo "Usage: rawr <operation+option> [...]
+  Example: rawr -Ugn
+Operations:
+  rawr {-H --help} <operation>     >> displays help dialogue
+  rawr {-V --version}              >> displays version information
+  rawr {-F --fetch} <package(s)>   >> installs selected package(s)
+  rawr {-R --remove} <package(s)>  >> removes selected package(s)
+  rawr {-U --update}               >> updates the system
+  rawr {-G --upgrade}              >> upgrades the system
+  rawr {-S --search} <query>       >> searches repositories for package(s)
+  rawr {-O --repo} <ppa>           >> adds Ubuntu/Debian PPAs
+Use 'rawr -H <operation>' for extended information on it
+  Example: rawr -H --help" && exit
+    else
+      case "$2" in
+        -H|--help)
+          echo "Usage: rawr {-H --help} <operation>
+Description: displays help dialogue.
+Options:
+  rawr -H {-H --help}              >> displays help dialogue for 'help' operation
+  rawr -H {-V --version}           >> displays help dialogue for 'version' operation
+  rawr -H {-F --fetch}             >> displays help dialogue for 'fetch' operation
+  rawr -H {-R --remove}            >> displays help dialogue for 'remove' operation
+  rawr -H {-U --update}            >> displays help dialogue for 'update' operation
+  rawr -H {-G --upgrade}           >> displays help dialogue for 'upgrade' operation
+  rawr -H {-S --search}            >> displays help dialogue for 'search' operation
+  rawr -H {-O --repo}              >> displays help dialogue for 'repo' operation" && exit
+          ;;
+        -V|--version)
+          echo "Usage: rawr {-V --version}
+Description: displays version information" && exit
+          ;;
+        -F|--fetch)
+          echo "Usage: rawr {-F*} <package(s)>
+Description: installs selected package(s)
+Options:
+  rawr -Fn <package(s)>            >> don't require consent to fetch selected package(s)
+  rawr -Fe <package(s)>            >> refetch selected package(s) without consent
+  rawr -Fen <package(s)>           >> refetch selected package(s) without consent
+  rawr -Fl                         >> lists installed packages" && exit
+          ;;
+        -R|--remove)
+          echo "Usage: rawr {-R*} <package(s)>
+Description: removes selected package(s)
+Options:
+  rawr -Rn <package(s)>            >> don't require consent to install packages
+  rawr -Ra <package(s)>            >> automatically removes unneeded packages
+  rawr -Ran <package(s)>           >> automatically removes unneeded packages without consent
+  rawr -Rp <package(s)>            >> purge all of package(s) files and directories
+  rawr -Rpn <package(s)>           >> purge all of package(s) files and directories without consent
+  rawr -Ro <package(s)> <ppa>      >> removes selected PPA
+  rawr -Ron <package(s)>           >> removes selected PPA without consent" && exit
+          ;;
+        -U|--upgrade)
+          echo "Usage: rawr {-U*} <package(s)>
+Description: updates the system
+Options:
+  rawr -Un                         >> don't require consent to download updates
+  rawr -Ug                         >> update the system then install updates
+  rawr -Ugn                        >> update the system then install updates without consent"
+          ;;
+        -G|--upgrade)
+          echo "Usage: rawr {-G*} <package(s)>
+Description: upgrades the system
+Options:
+  rawr -Gn                         >> don't require confirmation to install updates
+  rawr -Gu                         >> update the system then install updates
+  rawr -Gun                        >> update the system then install updates without consent"
+          ;;
+        -S|--search)
+          echo "Usage: rawr {-S} <query>
+Description: searches repositories for packages."
+          ;;
+        -O|--repo)
+          echo "Usage: rawr {-O*} <ppa>
+Description: adds Debian/Ubuntu PPAs
+Options:
+  rawr -On                         >> adds Debian/Ubuntu PPA without consent
+  rawr -Or                         >> removes selected PPA
+  rawr -Orn                        >> removes selected PPA without consent" && exit
+          ;;
+      esac
+    fi
+    ;;
+  -V|-v|--version)
+    .version && exit
+    ;;
+  # Fetch
+  -F|--fetch)
+    .fetch && exit
+    ;;
+  -Fn)
+    .setConfirm && .fetch && exit
+    ;;
+  -Fe)
+    .refetch && exit
+    ;;
+  -Fen)
+    .setConfirm && .refetch && exit
+    ;;
+  -Fl)
+    .fetchList && exit
+    ;;
+  # Repo
+  -O|--repo)
+    .addRepo && exit
+    ;;
+  -On)
+    .setConfirm && .addRepo && exit
+    ;;
+  -Or)
+    .remRepo && exit
+    ;;
+  -Orn)
+    .setConfirm && .remRepo && exit
+    ;;
+  # Remove
+  -R|--remove)
+    .remove && exit
+    ;;
+  -Rn)
+    .setConfirm && .remove && exit
+    ;;
+  -Ra)
+    .autoRemove && exit
+    ;;
+  -Ran)
+    .setConfirm && .autoRemove && exit
+    ;;
+  -Rp)
+    .purge && exit
+    ;;
+  -Rpn)
+    .setConfirm && .purge && exit
+    ;;
+  -Ro)
+    .remRepo && exit
+    ;;
+  -Ron)
+    .setConfirm && .remRepo && exit
+    ;;
+  # Update
+  -U|--update)
+    .update && exit
+    ;;
+  -Un)
+    .setConfirm && .update && exit
+    ;;
+  # Upgrade
+  -G|--upgrade)
+    .upgrade && exit
+    ;;
+  -Gn)
+    .setConfirm && .upgrade && exit
+    ;;
+  # Update & Upgrade
+  -Ug|-Gu)
+    .update && .upgrade && exit
+    ;;
+  -Ugn|-Gun)
+    .setConfirm && .update && .upgrade && exit
+    ;;
+  -S|--search)
+    .search
+    ;;
+esac
+
+if [[ ! -z $1 ]];then
+  echo "error: invalid option '$1'"
+else
+  echo "error: no operation specified (use -H for help)"
+fi
